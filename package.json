@@ -1,0 +1,11 @@
+{
+	"name": "yamkeys",
+	"description": "A runtime configuration management utility",
+	"copyright": "Copyright © 2013 Nathan M. Swan",
+	"authors": [
+		"Nathan M. Swan"
+	],
+	"dependencies": {
+		"dyaml": "~master"
+	}
+}
