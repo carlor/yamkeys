@@ -25,12 +25,17 @@ import std.path;
 import dyaml.all;
 
 public:
+/// The global configuration variable.
 __gshared Configuration config;
 
 shared static this() {
     config = new Configuration();
 }
 
+/// Creates code which declares a variable of type T which is loaded with
+/// configurations by calling config.load,
+/// as well as a function of the given name which, given config, returns the
+/// variable.
 string configure(T, string name = defaultName!T)() {
     import std.array;
     import std.string;
@@ -47,12 +52,16 @@ string configure(T, string name = defaultName!T)() {
     return code;
 }
 
+/// The default key name for a type: its lowercased local name.
 template defaultName(T) {
     enum defaultName = splitter(T.stringof.toLower(), '.').back;
 }
 
+/// Holds the state for the configuration files.
 final class Configuration {
   public:
+    /// Attempts to place the YAML data at the key label into obj.
+    /// This is usually already done by the configure template.
     void load(T)(ref T obj, string label = defaultName!T) {
         static if (__traits(compiles, new T()) && is(T == class)) {
             if (obj is null) {
@@ -71,7 +80,6 @@ final class Configuration {
     Node yLocal;
 
     Node emptyYamlMap;
-    string[] args;
 
     string scName = null; Node* scInL=null, scInC=null;
     string dcName = null; Node* dcInL=null, dcInC=null;
@@ -88,7 +96,7 @@ final class Configuration {
         yConfig = getFromYamlFile("config", configFolderExists, "default");
         yLocal = getFromYamlFile("local", configFolderExists);
 
-        args = Runtime.args().dup;
+        string[] args = Runtime.args().dup;
         getopt(args, "config", &scName);
         if (scName is null) {
             if (auto cp = "config" in yLocal) {

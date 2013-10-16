@@ -6,7 +6,6 @@
 import yamkeys;
 
 version(yamkeys_main) {
-    // TODO test with vibe.d stuff like HTTPServerSettings
 
     struct Abcd {
         bool flag = true;
