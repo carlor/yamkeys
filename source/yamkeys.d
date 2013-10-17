@@ -109,8 +109,13 @@ final class Configuration {
         } else if (auto cp = "default" in yConfig) {
             dcName = cp.as!string;
         } else {
-            if (scName is null) {
-                throw new YamkeysException("No default configuration is specified.");
+            enum NoDefConf = "No default configuration is specified.";
+            version (Have_vibe_d) {
+                import vibe.core.log;
+                logWarn(NoDefConf);
+            } else {
+                import std.stdio;
+                stderr.writeln(NoDefConf);
             }
         }
 
@@ -128,7 +133,9 @@ final class Configuration {
         dcInC = dcName in yConfig;
     }
 
-    Node getFromYamlFile(string name, bool configFolderExists, string folderName=null) {
+    Node getFromYamlFile(string name, bool configFolderExists,
+            string folderName=null)
+    {
         auto namesToCheck = [name ~ ".yml", name ~ ".yaml"];
         if (configFolderExists) {
             alias ds = dirSeparator;
@@ -136,6 +143,7 @@ final class Configuration {
             namesToCheck ~= ["config" ~ ds ~ folderName ~ ".yml",
                              "config" ~ ds ~ folderName ~ ".yaml"];
         }
+
         foreach(fname; namesToCheck) {
             if (fname.exists) {
                 return Loader(fname).load();
@@ -162,49 +170,49 @@ final class Configuration {
         
         return configs;
     }
-	
-	void load(T)(ref T obj, Node node) 
-    {
-		static if (isBasicType!T && !is(T == enum) || isSomeString!T) {
-			obj = node.get!T;
-		}
-		else static if (isDynamicArray!T) {
+
+    void load(T)(ref T obj, Node node) {
+        static if (isBasicType!T && !is(T == enum) || isSomeString!T) {
+            obj = node.get!T;
+        }
+        else static if (isDynamicArray!T) {
             obj = [];
             obj.reserve(node.length);
-			foreach(ref Node e; node) {
+            foreach(ref Node e; node) {
                 typeof(obj[0]) obje;
-				load!(typeof(obje))(obje, e);
+                load!(typeof(obje))(obje, e);
                 obj ~= obje;
-			}
-		}
-		else static if (isAssociativeArray!T) {
+            }
+        }
+        else static if (isAssociativeArray!T) {
             T map;
             obj = map;
-			foreach(ref Node k, ref Node v; node) {
+            foreach(ref Node k, ref Node v; node) {
                 KeyType!T objk;
-				load!(KeyType!T)(objk, k);
-				
+                load!(KeyType!T)(objk, k);
+
                 ValueType!T objv;
-				load!(ValueType!T)(objv, v);
-				
-				obj[objk] = objv;
-			}
-		}
-		else static if (isAggregateType!T) {
+                load!(ValueType!T)(objv, v);
+
+                obj[objk] = objv;
+            }
+        }
+        else static if (isAggregateType!T) {
             static if (__traits(compiles, new T()) && is(T == class)) {
                 if (obj is null) {
                     obj = new T();
                 }
             }
 
-			alias FT = FieldTypeTuple!T;
-			
+            alias FT = FieldTypeTuple!T;
+
             enum src = ({
                 string res;
                 foreach(mb; [__traits(allMembers, T)]) {
                     res ~= `if (auto mbPtr = "`~mb~`" in node) {`;
                     string loadStmt =
-                        `load!(typeof(obj.`~mb~`))(obj.`~mb~`, node["`~mb~`"]);`;
+                        `load!(typeof(obj.`~mb~`))`~
+                            `(obj.`~mb~`, node["`~mb~`"]);`;
                     res ~= "
 static if (__traits(compiles, obj."~mb~"=typeof(obj."~mb~").init)) { 
 mixin(`"~loadStmt~"`); }
@@ -214,12 +222,12 @@ mixin(`"~loadStmt~"`); }
             })();
 
             mixin(src);
-		}
-	}
+        }
+    }
 }
 
 class YamkeysException : Exception {
-	this(string msg, string file=__FILE__, int line=__LINE__, Throwable t=null) {
-		super(msg, file, line, t);
-	}
+    this(string msg, string file=__FILE__, int line=__LINE__, Throwable t=null) {
+        super(msg, file, line, t);
+    }
 }
