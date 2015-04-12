@@ -97,7 +97,7 @@ final class Configuration {
         yLocal = getFromYamlFile("local", configFolderExists);
 
         string[] args = Runtime.args().dup;
-        getopt(args, "config", &scName);
+        getopt(args, std.getopt.config.passThrough, "config", &scName);
         if (scName is null) {
             if (auto cp = "config" in yLocal) {
                 scName = cp.as!string;
