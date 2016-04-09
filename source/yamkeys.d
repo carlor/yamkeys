@@ -210,9 +210,12 @@ final class Configuration {
                 string res;
                 foreach(mb; [__traits(allMembers, T)]) {
                     res ~= `if (auto mbPtr = "`~mb~`" in node) {`;
+                    string tpof = `typeof(obj.`~mb~`)`;
                     string loadStmt =
-                        `load!(typeof(obj.`~mb~`))`~
-                            `(obj.`~mb~`, node["`~mb~`"]);`;
+                        tpof~` t = `~tpof~`.init; `~
+                        `load!(`~tpof~`)`~
+                            `(t, node["`~mb~`"]);`~
+                        `obj.`~mb~` = t;`;
                     res ~= "
 static if (__traits(compiles, obj."~mb~"=typeof(obj."~mb~").init)) { 
 mixin(`"~loadStmt~"`); }
